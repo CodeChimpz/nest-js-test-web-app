@@ -10,7 +10,12 @@ export class Note{
   content: string
 
   @ManyToOne((type => User),(user)=>user.notes,{
+    orphanedRowAction: 'delete',
   })
   user: User
 
+  @ManyToOne((type) => User,(user)=>user.myNotes,{
+    orphanedRowAction: 'delete',
+  })
+  author: User;
 }

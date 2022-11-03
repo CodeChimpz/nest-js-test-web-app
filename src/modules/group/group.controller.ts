@@ -7,6 +7,11 @@ export class GroupController {
   constructor(private groupsService: GroupService) {
   }
 
+  @Get('groups/:author')
+  async getGroupsFor(){
+    //add later
+  }
+
   @Get(':group')
   async getGroup(@Param('group') group, @Body() body, @Req() req: any, @Res() res: Response) {
     try {
@@ -92,6 +97,7 @@ export class GroupController {
     }
 
   }
+
 
 
 }

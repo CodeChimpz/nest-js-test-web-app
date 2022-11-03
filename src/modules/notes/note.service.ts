@@ -1,82 +1,62 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Note } from './note.entity';
-import { User } from '../user/user.entity';
-import { Repository } from 'typeorm';
+import {Inject, Injectable} from '@nestjs/common';
+import {InjectRepository} from '@nestjs/typeorm';
+import {Note} from './note.entity';
+import {User} from '../user/user.entity';
+import {Repository, In, QueryBuilder} from 'typeorm';
 
 
 //crud on notes
 @Injectable()
 export class NoteService {
-  constructor(
-    @InjectRepository(Note)
-    private notesRepository: Repository<Note>,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-  ) {
-  }
-
-  //create one or more notes for a user
-  async create(id: number, notes: any[]) {
-    const user = await this.usersRepository.findOneBy({ id: id });
-    if (!user) {
-      return;
+    constructor(
+        @InjectRepository(Note)
+        private notesRepository: Repository<Note>,
+        @InjectRepository(User)
+        private usersRepository: Repository<User>,
+    ) {
     }
-    user.notes = notes;
-    await this.usersRepository.save(user);
-    return user;
-  }
 
-  async delete(id: number, notes: any[], options) {
-    const user = await this.usersRepository.findOne({
-      where: {
-        id: id,
-      },
-      relations: {
-        notes: true,
-      },
-    });
-    if (!user) {
-      return;
+    async delete(user: number, author: number, notes, options) {
+        const notesFound = await this.notesRepository.find({
+            relations: {
+                author: true,
+                user: true
+            },
+            where: {
+                user: {id: user},
+                author: {id: author}
+            },
+        });
+        const notesToDel = [...new Set([...notes, ...notesFound.map(note => note.id)])]
+        await this.notesRepository.delete({id: In(notesToDel)});
+        return user
     }
-    user.notes = options.all ? [] : user.notes.filter(note => {
-      if (!notes.find(del => {
-        return del.id == note.id;
-      })) {
-        return note;
-      }
-    });
-    await this.usersRepository.save(user);
-    return user.id;
-  }
 
-  //add notes to a user
-  async update(id: number, notes: any[]) {
-    const user = await this.usersRepository.findOne({
-      where: {
-        id: id,
-      },
-      relations: {
-        notes: true,
-      },
-    });
-    if (!user) {
-      return;
+    //add notes to a user
+    async update(user: number, author: number, notes: any[]) {
+        const userFound = await this.usersRepository.findOneBy({id: user})
+        const authorFound = await this.usersRepository.findOneBy({id: author})
+        if (!(authorFound || userFound)) {
+            return;
+        }
+        const newNotes = notes.map(note => {
+            return {...note, user: userFound, author: authorFound}
+        })
+        await this.notesRepository.insert(newNotes);
+        return user;
     }
-    user.notes.push(...notes);
-    await this.usersRepository.save(user);
-    return user.id;
-  }
 
-  //return all notes for a User
-  async findForUser(id: number): Promise<any> {
-    return await this.usersRepository.findOne({
-      relations: {
-        notes: true,
-      },
-      where: {
-        id: id,
-      },
-    });
-  }
+    //return all notes for a User
+    async findForUser(user: number, author: number): Promise<any> {
+        return await this.notesRepository.findOne({
+            relations: {
+                author: true,
+                user: true
+            },
+            where: {
+                user: {id: user},
+                author: {id: author}
+            },
+        });
+    }
 }

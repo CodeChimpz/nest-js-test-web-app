@@ -1,19 +1,19 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, ManyToOne, JoinTable } from 'typeorm';
-import { User } from './../user/user.entity';
-import { type } from 'os';
+import {Entity, Column, PrimaryGeneratedColumn, ManyToMany, ManyToOne, JoinTable} from 'typeorm';
+import {User} from './../user/user.entity';
+import {type} from 'os';
 
 @Entity()
 export class Group {
-  @PrimaryGeneratedColumn()
-  id: number;
+    @PrimaryGeneratedColumn()
+    id: number;
 
-  @Column()
-  name: string;
+    @Column()
+    name: string;
 
-  @ManyToMany((type) => User)
-  @JoinTable()
-  users: User[];
+    @ManyToMany((type) => User)
+    @JoinTable()
+    users: User[];
 
-  @ManyToOne((type) => User)
-  author: User;
+    @ManyToOne((type) => User)
+    author: User;
 }

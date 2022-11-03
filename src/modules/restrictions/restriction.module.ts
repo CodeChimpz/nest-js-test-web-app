@@ -7,8 +7,7 @@ import { Restriction } from './restriction.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
-    TypeOrmModule.forFeature([Restriction]),
+    TypeOrmModule.forFeature([User,Restriction]),
   ],
   providers: [RestrictionService],
   exports: [RestrictionService],

@@ -7,8 +7,7 @@ import { Note } from './note.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
-    TypeOrmModule.forFeature([Note]),
+    TypeOrmModule.forFeature([User,Note]),
   ],
   providers: [NoteService],
   exports: [NoteService],

@@ -43,7 +43,7 @@ export class GroupService {
   }
 
   //update group name
-  async update(id: number, name: string, author) {
+  async update(id: number, groupData, author) {
     const group = await this.groupsRepository.findOne({
       where: {
         id: id,
@@ -58,7 +58,7 @@ export class GroupService {
     if (!group) {
       return;
     }
-    group.name = name
+    Object.assign(group,groupData)
     await this.groupsRepository.save(group);
     return group;
   }
@@ -118,7 +118,9 @@ export class GroupService {
     }
     for (const u_id of user_ids) {
       const user = await this.usersRepository.findOneBy({ id: u_id });
-      group.users.push(user);
+      if(!group.users.includes(user)){
+        group.users.push(user);
+      }
     }
     await this.groupsRepository.save(group);
     return group;

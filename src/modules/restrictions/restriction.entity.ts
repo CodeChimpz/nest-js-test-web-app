@@ -6,13 +6,20 @@ export class Restriction {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({  default:"NONE"})
   type: string;
 
-  @Column()
+
+  @Column({nullable:true})
   timeout: string;
 
-  @OneToOne((type) => User, (user) => user.restriction)
+  @Column({nullable:true})
+  setAt: string;
+
+
+  @OneToOne((type) => User, (user) => user.restriction,{
+    orphanedRowAction:'delete'
+  })
   @JoinColumn()
   user: User;
 

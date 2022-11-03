@@ -31,15 +31,9 @@ export class RestrictionController {
   @Post(':user')
   async postBlock(@Param('user') user:  number, @Body() body, @Res() res: Response) {
     try {
-      const check = await this.restrictionService.check(Number(user));
-      if (!check) {
-        return res.status(404).json({
-          message: 'No such user',
-        });
-      }
       //todo : dto
-      const { value, timeout } = body;
-      await this.restrictionService.declare(Number(user), { body, timeout });
+      const { restriction } = body;
+      await this.restrictionService.declare(Number(user), restriction);
       return res.status(200);
     } catch (err) {
       console.log(err);
