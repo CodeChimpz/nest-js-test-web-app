@@ -1,7 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
-import {User_IF} from '../../interfaces/user.interface';
 import {User} from './user.entity';
 
 //CRUD operations on User entity
@@ -13,7 +12,7 @@ export class UserService {
     ) {
     }
 
-    async create(user: User_IF) {
+    async create(user) {
         await this.usersRepository.save(user);
     }
 
@@ -21,12 +20,12 @@ export class UserService {
         await this.usersRepository.delete(id)
     }
 
-    async update(user: User_IF) {
+    async update(user) {
         const toUpdate = await this.usersRepository.findOneBy({id: user.id})
         await this.usersRepository.update(toUpdate, user)
     }
 
-    async find(id: number): Promise<User_IF> {
+    async find(id: number): Promise<any> {
         return await this.usersRepository.findOneBy({id: id});
     }
 

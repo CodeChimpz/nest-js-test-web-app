@@ -1,10 +1,12 @@
 import {Controller, Post, Get, Body, Res, Param} from "@nestjs/common";
 import {Response} from "express";
 import {PostService} from "./post.service";
+import {WinstonService} from "../logger/winston.service";
 
 @Controller('posts')
 export class PostController {
-    constructor(private postsService: PostService) {
+    constructor(private postsService: PostService,
+                private logger: WinstonService) {
     }
 
     @Post('post')
@@ -14,7 +16,7 @@ export class PostController {
             const posted = await this.postsService.post(post, author)
             res.status(200).json({message: "successfully posted", content: posted})
         } catch (err) {
-            console.log(err)
+            this.logger.log({message: err.message, data: err}, 'error')
             throw err
         }
     }
@@ -25,7 +27,7 @@ export class PostController {
             const postFound = await this.postsService.find(post)
             res.status(200).json({content: postFound})
         } catch (err) {
-            console.log(err)
+            this.logger.log({message: err.message, data: err}, 'error')
             throw err
         }
     }

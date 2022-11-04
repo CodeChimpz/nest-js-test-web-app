@@ -1,11 +1,13 @@
 import {Controller, Post, Put, Delete, Get, Req, Res, Body, Param} from '@nestjs/common';
 import {Request, Response} from 'express';
 import {NoteService} from './note.service';
+import {WinstonService} from "../logger/winston.service";
 
 @Controller('notes')
 export class NoteController {
     constructor(
         private notesService: NoteService,
+        private logger: WinstonService
     ) {
     }
 
@@ -23,7 +25,7 @@ export class NoteController {
                 content: response,
             });
         } catch (err) {
-            console.log(err);
+            this.logger.log({message: err.message, data: err}, 'error')
             throw err;
         }
     }
@@ -42,7 +44,7 @@ export class NoteController {
                 message: `Updated notes for user ${subj}`,
             });
         } catch (err) {
-            console.log(err);
+            this.logger.log({message: err.message, data: err}, 'error')
             throw err;
         }
     }
@@ -61,7 +63,7 @@ export class NoteController {
                 message: `Updated notes for user ${subj}`,
             });
         } catch (err) {
-            console.log(err);
+            this.logger.log({message: err.message, data: err}, 'error')
             throw err;
         }
     }
