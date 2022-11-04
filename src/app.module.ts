@@ -4,45 +4,52 @@ import {UserModule} from './modules/user/user.module';
 import {AuthModule} from './modules/auth/auth.module';
 import {AdminModule} from './modules/admin/admin.module';
 import {CheckAccess, CheckAdmin} from './middleware/authentication.middleware'
-import {User} from './modules/user/user.entity';
-import {Restriction} from './modules/restrictions/restriction.entity';
-import {Group} from './modules/group/group.entity';
-import {Note} from './modules/notes/note.entity';
-import {SecretModule} from "./modules/secret/secret.module";
 import {PostModule} from "./modules/post/post.module";
 import * as dotenv from 'dotenv'
+import {Note} from "./modules/notes/note.entity";
+import {Group} from "./modules/group/group.entity";
+import {User} from "./modules/user/user.entity";
+import {Restriction} from "./modules/restrictions/restriction.entity";
 import {Post} from "./modules/post/post.entity";
+import {SecretModule} from "./util/secret/secret.module";
+import {SecretService} from "./util/secret/secret.service";
+import {WinstonModule} from "./modules/logger/winston.module";
+import {Log} from "./modules/logger/db/log.entity";
+import * as fs from "fs";
 
 dotenv.config({path: './config/.env'})
-
-const {MONGO_USER, MONGO_HOST, MONGO_PORT, MONGO_PASSWORD, MONGO_BASE} = process.env
-console.log(MONGO_USER, MONGO_HOST, MONGO_PORT, MONGO_PASSWORD, MONGO_BASE)
+const dbData = SecretService.getData().dbConnectionData
 
 @Module({
     //todo : env variables
     imports: [
         TypeOrmModule.forRoot({
             type: 'mysql',
-            host: MONGO_HOST,
-            port: Number(MONGO_PORT),
-            username: MONGO_USER,
-            password: MONGO_PASSWORD,
-            database: MONGO_BASE,
+            ...dbData.logger,
+            entities: [Log],
+            synchronize: true,
+            name: 'logger_db'
+        }),
+        TypeOrmModule.forRoot({
+            type: 'mysql',
+            ...dbData.default,
             entities: [Note, Group, User, Restriction, Post],
             synchronize: true,
-        }), UserModule,
+        }),
+        UserModule,
         AuthModule,
         AdminModule,
+        PostModule,
         SecretModule,
-        PostModule
+        WinstonModule
     ],
 })
 export class AppModule {
     configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(CheckAccess)
-            .exclude('auth')
-            .forRoutes('*')
+            .exclude('path')
+            .forRoutes('.*')
         consumer
             .apply(CheckAdmin)
             .forRoutes('admin')

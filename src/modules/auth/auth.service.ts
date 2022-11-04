@@ -1,9 +1,8 @@
 import {Injectable} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
-import {User} from '../user/user.entity';
 import {UserService} from '../user/user.service';
-import {SecretService} from '../secret/secret.service';
+import {SecretService} from "../../util/secret/secret.service"
 
 //Authentication logic
 @Injectable()
@@ -16,7 +15,7 @@ export class AuthService {
         const {password, email} = user;
         const check = await this.userService.checkEmail(email)
         if (check) {
-            return ;
+            return;
         }
         user.password = await bcrypt.hash(password, 10);
         await this.userService.create(user);
@@ -24,17 +23,17 @@ export class AuthService {
     }
 
     async login(user): Promise<any> {
-        const { password, email} = user;
+        const {password, email} = user;
         const suspect = await this.userService.checkEmail(email);
         if (!suspect) {
-            return ;
+            return;
         }
         const check = await bcrypt.compare(password, suspect.password);
         if (!check) {
-            return ;
+            return;
         }
         return {
-            token: jwt.sign(JSON.stringify({id: suspect.id, role: suspect.role}), this.secret.getData('jwt').bearer),
+            token: jwt.sign(JSON.stringify({id: suspect.id, role: suspect.role}), this.secret.data.jwt.bearer),
             id: suspect.id,
         };
     }
