@@ -14,7 +14,6 @@ import {Post} from "./modules/post/post.entity";
 import {SecretModule} from "./util/secret/secret.module";
 import {SecretService} from "./util/secret/secret.service";
 import {WinstonModule} from "./modules/logger/winston.module";
-import {Log} from "./modules/logger/db/log.entity";
 import * as fs from "fs";
 
 dotenv.config({path: './config/.env'})
@@ -23,13 +22,6 @@ const dbData = SecretService.getData().dbConnectionData
 @Module({
     //todo : env variables
     imports: [
-        TypeOrmModule.forRoot({
-            type: 'mysql',
-            ...dbData.logger,
-            entities: [Log],
-            synchronize: true,
-            name: 'logger_db'
-        }),
         TypeOrmModule.forRoot({
             type: 'mysql',
             ...dbData.default,
