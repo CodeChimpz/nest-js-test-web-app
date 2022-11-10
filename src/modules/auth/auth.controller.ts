@@ -23,7 +23,9 @@ export class AuthController {
                         "Invalid data or such user already exists"
                 })
             }
-            return 'Successfully registered user';
+            res.status(200).json({
+            message:'successfully authenticated'
+        });
         } catch (err) {
             await this.logger.log({message: err.message, data: err}, 'error')
             return res.status(500).json({message: 'An error has occured'});

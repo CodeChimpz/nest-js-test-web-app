@@ -26,12 +26,13 @@ export class RestrictionService {
         if (!user) {
             return;
         }
-        if (!restriction) {
-            user.restriction = null
-            return 1;
+        if (user.restriction) {
+            await this.restrictionsRepository.delete(user.restriction)
         }
-        Object.assign(user.restriction, restriction)
-        await this.usersRepository.save(user);
+        if (restriction && restriction?.type) {
+            user.restriction = restriction
+            await this.usersRepository.save(user);
+        }
         return 1;
     }
 
@@ -46,10 +47,7 @@ export class RestrictionService {
                     restriction: true
                 }
             });
-        return user.restriction || {type: null, timeout: null, setAt: null};
+        return user.restriction ?? {type: null, timeout: null, setAt: null};
     }
 
-    async convertTime() {
-
-    }
 }

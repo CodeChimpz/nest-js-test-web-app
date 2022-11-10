@@ -20,7 +20,8 @@ export class PostService {
                 id: id
             },
             relations: {
-                mentionedPosts: true
+                replies: true,
+                originalPoster: true
             }
         })
     }
@@ -30,5 +31,13 @@ export class PostService {
         await this.postsRepository.save(newPost)
         return newPost
     }
+
+    async comment(postData, post, author) {
+        const mentioned = await this.postsRepository.findOneBy({id: post})
+        const newPost = this.postsRepository.create({...postData, mentionedPost: mentioned, originalPoster: author})
+        await this.postsRepository.save(newPost)
+        return newPost
+    }
+
 
 }

@@ -14,6 +14,12 @@ export class CheckAccess {
 
     async use(req: Request, res: Response, next: NextFunction) {
         try {
+            //nest is retarded and doesn't fully support route exclusions -
+            // e.g. "consumer.exclude("string").forRoutes("*")" is not viable
+            if (req.originalUrl.match(/\/auth\/.*/)) {
+                return next()
+            }
+            this.logger.log('Authentication middleware', 'debug')
             const token = req.header('Authorization').split(' ')[1]
             const check = await jwt.verify(token, this.secretService.data.jwt.bearer)
             if (!check) {
@@ -39,6 +45,7 @@ export class CheckAccess {
                 default:
                     req.body.author = check.id
                     // req.body.role = check.role
+                    this.logger.log({message: "Authenticated ", data: {id: req.body.author}}, 'info')
                     return next()
 
             }

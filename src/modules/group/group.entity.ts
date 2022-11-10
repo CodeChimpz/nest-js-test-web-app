@@ -11,7 +11,16 @@ export class Group {
     name: string;
 
     @ManyToMany((type) => User)
-    @JoinTable()
+    @JoinTable({
+        joinColumn: {
+            name: "group",
+            referencedColumnName: "id"
+        },
+        inverseJoinColumn: {
+            name: "user",
+            referencedColumnName: "id"
+        }
+    })
     users: User[];
 
     @ManyToOne((type) => User)

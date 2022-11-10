@@ -1,24 +1,32 @@
 import {Injectable} from "@nestjs/common";
-import {InjectRepository} from "@nestjs/typeorm";
-import {Repository} from "typeorm";
+
 import {createLogger, transports, format} from "winston";
-import {MysqlTransport} from "./db/winston.mysql.transport";
-import * as Transport from "winston-transport";
+import * as path from "path";
 
 @Injectable()
 export class WinstonService {
     logger: Logger
 
     constructor
-    (
-        private mysqlTransport: MysqlTransport
-    ) {
+    () {
         switch (process.env.LOGGER_ENV) {
-            case("test"):
-                this.logger = new MysqlWinstonLogger(this.mysqlTransport)
-                break;
             case("dev"):
-                this.logger = new ConsoleWinstonLogger()
+                const LOG_DIR = 'logs'
+                this.logger = new WinstonLogger([
+                    new transports.Console({
+                        level: 'debug'
+                    }),
+                    new transports.File({
+                        filename: `${LOG_DIR}/combined.log`,
+                        level: 'info',
+                        maxsize: 5242880, // 5MB
+                    },),
+                    new transports.File({
+                        filename: `${LOG_DIR}/app-err.log`,
+                        level: "error",
+                        maxsize: 5242880, // 5MB
+                    }),
+                ])
                 break;
             case("production"):
                 break;
@@ -41,83 +49,56 @@ export class WinstonService {
 }
 
 abstract class Logger {
-    defaultLogger
+    abstract defaultLogger
     abstract httpLogger
     abstract errorLogger
     abstract debugLogger
 
-    constructor(defaultSettings) {
-        this.defaultLogger = createLogger({...defaultSettings})
-    }
 }
 
-class MysqlWinstonLogger extends Logger {
-    transport
+class WinstonLogger extends Logger {
+    defaultLogger;
+    httpLogger;
+    errorLogger;
+    debugLogger;
 
-    constructor(transport) {
-        super({
-            level: "info",
-            format: format.combine(format.label({label: "APP"}), format.timestamp(), format.json()),
-            transports: [transport]
+
+    constructor(transports) {
+        super();
+        const defaultStringFormat = format.printf((info) => {
+            const {label, status, data, message, timestamp} = info
+            const stack = data?.stack
+            return (`[${label}] - ${timestamp || ''} - ${status || ''} - ${message} : ${data ? JSON.stringify(data) + (stack ? "\n" + stack : "") : ''}`)
         });
+        const defaultFileFormat = {}
+        const defaultSettings = {
+            level: "info",
+            format: format.combine(format.label({label: "APP"}), format.timestamp(), defaultStringFormat),
+            transports: transports
+        }
+        this.defaultLogger = createLogger(
+            {...defaultSettings}
+        )
+        this.httpLogger = createLogger(
+            {
+                ...defaultSettings,
+                format: format.combine(format.label({label: 'HTTP'}), format.timestamp(), format.colorize(), defaultStringFormat)
+            }
+        )
+        this.errorLogger = createLogger(
+            {
+                //later
+                ...defaultSettings,
+                format: format.combine(format.label({label: 'ERROR'}), format.errors({stack: true}), format.timestamp(), format.colorize(), defaultStringFormat)
+            }
+        )
+        this.debugLogger = createLogger(
+            {
+                //later
+                ...defaultSettings,
+                format: format.combine(format.label({label: 'DEBUG'}), format.colorize(), defaultStringFormat)
+            }
+        )
     }
 
-    httpLogger = createLogger(
-        {
-            ...this.defaultLogger,
-            format: format.combine(format.label({label: 'HTTP'}), format.timestamp(), format.json())
-        }
-    )
-    errorLogger = createLogger(
-        {
-            //later
-            ...this.defaultLogger,
-            format: format.combine(format.label({label: 'ERROR'}), format.timestamp(), format.json())
-        }
-    )
-    debugLogger = createLogger(
-        {
-            //later
-            ...this.defaultLogger,
-            format: format.combine(format.label({label: 'DEBUG'}), format.json())
-        }
-    )
-
-
-}
-
-class ConsoleWinstonLogger extends Logger {
-    constructor() {
-        super({
-            level: "info",
-            format: format.combine(format.label({label: "APP"}), format.timestamp(), format.cli()),
-            transports: [new transports.Console()]
-        });
-
-    }
-
-    defaultStringFormat = format.printf(({label, status, data, message, timestamp}) => {
-        return (`[${label}] - ` + timestamp + (status ? ` - ${status} - ` : '--') + message + "\t data: " + JSON.stringify(data, null, '\t'))
-    });
-
-    httpLogger = createLogger(
-        {
-            ...this.defaultLogger,
-            format: format.combine(format.label({label: 'HTTP'}), format.timestamp(), format.colorize(), this.defaultStringFormat)
-        }
-    )
-    errorLogger = createLogger(
-        {
-            //later
-            ...this.defaultLogger,
-            format: format.combine(format.label({label: 'ERROR'}), format.timestamp(), format.colorize(), this.defaultStringFormat)
-        }
-    )
-    debugLogger = createLogger(
-        {
-            //later
-            ...this.defaultLogger,
-            format: format.combine(format.label({label: 'DEBUG'}), format.colorize(), this.defaultStringFormat)
-        }
-    )
 }

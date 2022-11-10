@@ -14,8 +14,7 @@ import {Post} from "./modules/post/post.entity";
 import {SecretModule} from "./util/secret/secret.module";
 import {SecretService} from "./util/secret/secret.service";
 import {WinstonModule} from "./modules/logger/winston.module";
-import {Log} from "./modules/logger/db/log.entity";
-import * as fs from "fs";
+import {Request, Response, NextFunction} from 'express';
 
 dotenv.config({path: './config/.env'})
 const dbData = SecretService.getData().dbConnectionData
@@ -25,16 +24,10 @@ const dbData = SecretService.getData().dbConnectionData
     imports: [
         TypeOrmModule.forRoot({
             type: 'mysql',
-            ...dbData.logger,
-            entities: [Log],
-            synchronize: true,
-            name: 'logger_db'
-        }),
-        TypeOrmModule.forRoot({
-            type: 'mysql',
             ...dbData.default,
             entities: [Note, Group, User, Restriction, Post],
             synchronize: true,
+            dropSchema:process.env.DB_ENV
         }),
         UserModule,
         AuthModule,
@@ -48,8 +41,7 @@ export class AppModule {
     configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(CheckAccess)
-            .exclude('path')
-            .forRoutes('.*')
+            .forRoutes('*')
         consumer
             .apply(CheckAdmin)
             .forRoutes('admin')
