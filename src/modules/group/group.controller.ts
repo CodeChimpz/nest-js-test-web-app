@@ -18,7 +18,7 @@ export class GroupController {
     async getGroup(@Param('group') group, @Body() body, @Req() req: any, @Res() res: Response) {
         try {
             const {author} = body;
-            const response = await this.groupsService.find(group, author);
+            const response = await this.groupsService.find(group);
             if (!response) {
                 return res.status(404).json({
                     message: 'No such group',
@@ -43,7 +43,7 @@ export class GroupController {
                     message: 'you already have a group with such name',
                 });
             }
-            await this.groupsService.addTo(group, users, author);
+            await this.groupsService.addTo(group, users);
             return res.status(200).json({
                 message: 'Group created',
                 content: group,
@@ -61,13 +61,13 @@ export class GroupController {
             let response;
             switch (action) {
                 case('add'):
-                    response = await this.groupsService.addTo(group, body.users, author);
+                    response = await this.groupsService.addTo(group, body.users);
                     break;
                 case('delete'):
-                    response = await this.groupsService.deleteFrom(group, body.users, author);
+                    response = await this.groupsService.deleteFrom(group, body.users);
                     break;
                 case('edit'):
-                    response = await this.groupsService.update(group, body.groupData, author);
+                    response = await this.groupsService.update(group, body.groupData);
                     break;
             }
             if (!response) {
@@ -89,7 +89,7 @@ export class GroupController {
     async deleteGroup(@Param('group') group, @Body() body, @Res() res: Response) {
         try {
             const {author} = body;
-            const response = await this.groupsService.delete(group, author);
+            const response = await this.groupsService.delete(group);
             return res.status(200).json({
                 message: 'Deleted group',
             });

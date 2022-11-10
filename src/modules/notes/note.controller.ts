@@ -49,11 +49,12 @@ export class NoteController {
         }
     }
 
-    @Delete('note/:user')
-    async delNote(@Param('user') user, @Body() body, @Res() res: Response) {
+    @Delete('notes')
+    async delNote(@Body() body, @Res() res: Response) {
         try {
+
             const {author, notes, options} = body;
-            const subj = await this.notesService.delete(Number(user), Number(author), notes, options);
+            const subj = await this.notesService.delete(Number(author), notes, options);
             if (!subj) {
                 return res.status(404).json({
                     message: 'No such notes found for such user',

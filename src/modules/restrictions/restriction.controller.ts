@@ -25,8 +25,9 @@ export class RestrictionController {
             });
         } catch (err) {
             this.logger.log({message: err.message, data: err}, 'error')
-            //todo: error handling
-            throw(err);
+            return res.status(500).json({
+                message: 'Server error',
+            });
         }
     }
 

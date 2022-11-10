@@ -1,4 +1,4 @@
-import {Entity, Column, PrimaryGeneratedColumn, ManyToMany, OneToMany, OneToOne, JoinTable} from 'typeorm';
+import {Entity, Column, PrimaryGeneratedColumn, ManyToMany, OneToMany, OneToOne, JoinTable, Index} from 'typeorm';
 import {Group} from '../group/group.entity';
 import {Note} from '../notes/note.entity';
 import {Restriction} from '../restrictions/restriction.entity';
@@ -15,6 +15,7 @@ export class User {
     @Column()
     password: string;
 
+    @Index()
     @Column()
     email: string;
 
@@ -25,13 +26,22 @@ export class User {
 
     @OneToOne((type => Restriction), (restriction) => restriction.user, {
         onDelete: 'CASCADE',
-        onUpdate:'CASCADE',
-        cascade: ['update'],
+        onUpdate: 'CASCADE',
+        cascade: true,
     })
     restriction: Restriction;
 
     @ManyToMany((type) => Group)
-    @JoinTable()
+    @JoinTable({
+        joinColumn: {
+            name: "group",
+            referencedColumnName: "id"
+        },
+        inverseJoinColumn: {
+            name: "user",
+            referencedColumnName: "id"
+        }
+    })
     groups: Group[];
 
     @OneToMany((type) => Group, (group) => group.author, {

@@ -9,10 +9,15 @@ export class Post {
     @Column()
     textContent: string
 
-    @OneToMany((type) => Post, (post) => post.replies, {})
-    mentionedPosts: Post[]
+    @ManyToOne((type) => Post, (post) => post.replies, {
+        cascade:true,
+        orphanedRowAction:'delete'
+    })
+    mentionedPost: Post
 
-    @ManyToOne(type => Post, post => post.mentionedPosts, {})
+    @OneToMany(type => Post, post => post.mentionedPost, {
+        onDelete:"CASCADE"
+    })
     replies: Post[]
 
     @ManyToOne(type => User, () => {

@@ -16,20 +16,22 @@ export class NoteService {
     ) {
     }
 
-    async delete(user: number, author: number, notes, options) {
-        const notesFound = await this.notesRepository.find({
-            relations: {
-                author: true,
-                user: true
-            },
-            where: {
-                user: {id: user},
-                author: {id: author}
-            },
-        });
-        const notesToDel = [...new Set([...notes, ...notesFound.map(note => note.id)])]
-        await this.notesRepository.delete({id: In(notesToDel)});
-        return user
+    async delete(author: number, notes, options) {
+        if (options.all) {
+            const authorFound = await this.usersRepository.findOne({
+                where: {
+                    id: author
+                },
+                relations: {
+                    notes: true
+                }
+            })
+            authorFound.notes = []
+            await this.usersRepository.save(authorFound)
+            return 1;
+        }
+        await this.notesRepository.delete({id: In(notes)});
+        return 1;
     }
 
     //add notes to a user

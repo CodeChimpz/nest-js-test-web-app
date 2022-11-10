@@ -13,9 +13,12 @@ export class WinstonService {
             case("dev"):
                 const LOG_DIR = 'logs'
                 this.logger = new WinstonLogger([
-                    new transports.Console(),
+                    new transports.Console({
+                        level: 'debug'
+                    }),
                     new transports.File({
                         filename: `${LOG_DIR}/combined.log`,
+                        level: 'info',
                         maxsize: 5242880, // 5MB
                     },),
                     new transports.File({
@@ -62,12 +65,15 @@ class WinstonLogger extends Logger {
 
     constructor(transports) {
         super();
-        const defaultStringFormat = format.printf(({label, status, data, message, timestamp}) => {
-            return (`[${label}] - ` + timestamp + (status ? ` - ${status} - ` : '--') + message + "data: " + JSON.stringify(data))
+        const defaultStringFormat = format.printf((info) => {
+            const {label, status, data, message, timestamp} = info
+            const stack = data?.stack
+            return (`[${label}] - ${timestamp || ''} - ${status || ''} - ${message} : ${data ? JSON.stringify(data) + (stack ? "\n" + stack : "") : ''}`)
         });
+        const defaultFileFormat = {}
         const defaultSettings = {
             level: "info",
-            format: format.combine(format.label({label: "APP"}), format.timestamp(), format.cli()),
+            format: format.combine(format.label({label: "APP"}), format.timestamp(), defaultStringFormat),
             transports: transports
         }
         this.defaultLogger = createLogger(
@@ -83,7 +89,7 @@ class WinstonLogger extends Logger {
             {
                 //later
                 ...defaultSettings,
-                format: format.combine(format.label({label: 'ERROR'}), format.timestamp(), format.colorize(), defaultStringFormat)
+                format: format.combine(format.label({label: 'ERROR'}), format.errors({stack: true}), format.timestamp(), format.colorize(), defaultStringFormat)
             }
         )
         this.debugLogger = createLogger(
