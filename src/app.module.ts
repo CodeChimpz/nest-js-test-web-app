@@ -27,7 +27,7 @@ const dbData = SecretService.getData().dbConnectionData
             ...dbData.default,
             entities: [Note, Group, User, Restriction, Post],
             synchronize: true,
-            dropSchema:process.env.DB_ENV
+            dropSchema: false
         }),
         UserModule,
         AuthModule,

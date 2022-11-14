@@ -2,6 +2,8 @@ import {Controller, Post, Put, Delete, Get, Req, Res, Body, Param} from '@nestjs
 import {Response} from 'express';
 import {GroupService} from './group.service';
 import {WinstonService} from "../logger/winston.service";
+import {ResponseObj} from "../../dtos/response";
+import {GroupDto} from "../../dtos/groupDTO";
 
 @Controller('groups')
 export class GroupController {
@@ -9,24 +11,25 @@ export class GroupController {
                 private logger: WinstonService) {
     }
 
-    @Get('groups/:author')
-    async getGroupsFor() {
-        //add later
+    @Get('my')
+    async getGroupsFor(@Param('author') author, @Res() res: Response) {
+        try {
+            const result = await this.groupsService.getAll(author)
+            return res.status(200).json(new ResponseObj('my groups', result.map(group => new GroupDto(group))))
+        } catch (err) {
+            this.logger.log({message: err.message, data: err}, 'error')
+            throw err;
+        }
     }
 
     @Get(':group')
-    async getGroup(@Param('group') group, @Body() body, @Req() req: any, @Res() res: Response) {
+    async getGroup(@Param('group') group, @Req() req: any, @Res() res: Response) {
         try {
-            const {author} = body;
             const response = await this.groupsService.find(group);
             if (!response) {
-                return res.status(404).json({
-                    message: 'No such group',
-                });
+                return res.status(404).json(new ResponseObj('no such group'));
             }
-            return res.status(200).json({
-                content: response,
-            });
+            return res.status(200).json(new ResponseObj('', new GroupDto(response)));
         } catch (err) {
             this.logger.log({message: err.message, data: err}, 'error')
             throw err;
@@ -39,15 +42,11 @@ export class GroupController {
             const {groupData, users, author} = body;
             const group = await this.groupsService.create(groupData, author);
             if (!group) {
-                return res.status(404).json({
-                    message: 'you already have a group with such name',
-                });
+                return res.status(400).json(new ResponseObj('you already have a group with such name'));
             }
             await this.groupsService.addTo(group, users);
-            return res.status(200).json({
-                message: 'Group created',
-                content: group,
-            });
+            return res.status(200).json(new ResponseObj('group created', {id: group}
+            ));
         } catch (err) {
             this.logger.log({message: err.message, data: err}, 'error')
             throw err;
@@ -57,7 +56,6 @@ export class GroupController {
     @Put(':group/:action')
     async editGroup(@Param('group') group, @Param('action') action, @Body() body, @Res() res: Response) {
         try {
-            const {author} = body;
             let response;
             switch (action) {
                 case('add'):
@@ -71,14 +69,9 @@ export class GroupController {
                     break;
             }
             if (!response) {
-                return res.status(404).json({
-                    message: 'No such group',
-                });
+                return res.status(404).json(new ResponseObj('no such user or group'));
             }
-            return res.status(200).json({
-                message: 'Group updated',
-                content: response,
-            });
+            return res.status(200).json(new ResponseObj('group updated', new GroupDto(response)));
         } catch (err) {
             this.logger.log({message: err.message, data: err}, 'error')
             throw err;
@@ -86,13 +79,10 @@ export class GroupController {
     }
 
     @Delete(':group')
-    async deleteGroup(@Param('group') group, @Body() body, @Res() res: Response) {
+    async deleteGroup(@Param('group') group, @Res() res: Response) {
         try {
-            const {author} = body;
-            const response = await this.groupsService.delete(group);
-            return res.status(200).json({
-                message: 'Deleted group',
-            });
+            await this.groupsService.delete(group);
+            return res.status(200).json(new ResponseObj('deleted group'));
         } catch (err) {
             this.logger.log({message: err.message, data: err}, 'error')
             throw err;

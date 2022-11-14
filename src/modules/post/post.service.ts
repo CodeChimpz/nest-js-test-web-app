@@ -14,7 +14,7 @@ export class PostService {
     ) {
     }
 
-    async find(id: number) {
+    async find(id: string) {
         return await this.postsRepository.findOne({
             where: {
                 id: id
@@ -34,6 +34,9 @@ export class PostService {
 
     async comment(postData, post, author) {
         const mentioned = await this.postsRepository.findOneBy({id: post})
+        if (!mentioned) {
+            return;
+        }
         const newPost = this.postsRepository.create({...postData, mentionedPost: mentioned, originalPoster: author})
         await this.postsRepository.save(newPost)
         return newPost

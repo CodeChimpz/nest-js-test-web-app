@@ -16,7 +16,7 @@ export class UserService {
         await this.usersRepository.save(user);
     }
 
-    async delete(id: number) {
+    async delete(id: string) {
         await this.usersRepository.delete(id)
     }
 
@@ -25,7 +25,7 @@ export class UserService {
         await this.usersRepository.update(toUpdate, user)
     }
 
-    async find(id: number): Promise<any> {
+    async find(id: string): Promise<any> {
         return await this.usersRepository.findOneBy({id: id});
     }
 

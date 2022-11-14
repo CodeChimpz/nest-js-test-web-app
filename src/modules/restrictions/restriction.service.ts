@@ -14,7 +14,7 @@ export class RestrictionService {
     ) {
     }
 
-    async declare(id: number, restriction) {
+    async declare(id: string, restriction) {
         const user = await this.usersRepository.findOne({
             where: {
                 id: id
@@ -36,7 +36,7 @@ export class RestrictionService {
         return 1;
     }
 
-    async check(id: number) {
+    async check(id: string) {
         const user = await this.usersRepository.findOne(
             {
                 where:

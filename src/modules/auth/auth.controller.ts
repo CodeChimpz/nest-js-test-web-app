@@ -2,6 +2,7 @@ import {Controller, Post, Req, Res, Body} from '@nestjs/common';
 import {Request, Response} from 'express';
 import {AuthService} from './auth.service';
 import {WinstonService} from "../logger/winston.service";
+import {ResponseObj} from "../../dtos/response";
 
 
 @Controller('auth')
@@ -17,18 +18,12 @@ export class AuthController {
         try {
             const result = await this.authService.register(body.user);
             if (!result) {
-                await this.logger.log({message: "Failed register", data: body.user, status: 401}, 'http')
-                return res.status(401).json({
-                    message: "" +
-                        "Invalid data or such user already exists"
-                })
+                return res.status(401).json(new ResponseObj('invalid data or user already exists with such credentials'))
             }
-            res.status(200).json({
-            message:'successfully authenticated'
-        });
+            res.status(200).json(new ResponseObj('successfully signed up'));
         } catch (err) {
             await this.logger.log({message: err.message, data: err}, 'error')
-            return res.status(500).json({message: 'An error has occured'});
+            throw err
         }
     }
 
@@ -37,18 +32,13 @@ export class AuthController {
         try {
             const result = await this.authService.login(body.user);
             if (!result) {
-                await this.logger.log({message: "Failed authentication", data: body.user, status: 401}, 'http')
-                return res.status(401).json({
-                    message: "" +
-                        "Not authenticated! Invalid email or password."
-                })
+                return res.status(401).json(new ResponseObj('not authenticated ! invalid email or password'))
             }
-            res.status(200).json({
-                data: result,
-            });
+            this.logger.log({message: 'User logged in', data: {id: result.id}}, 'info')
+            res.status(200).json(new ResponseObj('successfully authenticated', result));
         } catch (err) {
             await this.logger.log({message: err.message, data: err}, 'error')
-            return res.status(500).json({message: 'An error has occured'});
+            throw err
         }
     }
 }

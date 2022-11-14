@@ -3,8 +3,8 @@ import {User} from '../user/user.entity';
 
 @Entity()
 export class Note{
-  @PrimaryGeneratedColumn()
-  id: number
+  @PrimaryGeneratedColumn("uuid")
+  id: string
 
   @Column()
   content: string

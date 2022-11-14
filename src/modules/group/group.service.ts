@@ -40,24 +40,29 @@ export class GroupService {
         return newGroup.id;
     }
 
-    async delete(id: number) {
+    async delete(id: string) {
         await this.groupsRepository.delete(id);
     }
 
-    async find(id: number) {
+    async find(id: string) {
         return await this.groupsRepository.findOne({
             where: {id: id},
             relations: {
                 users: true,
+                author:true
             },
         });
     }
 
     //update group name
-    async update(id: number, groupData) {
+    async update(id: string, groupData) {
         const group = await this.groupsRepository.findOne({
             where: {
                 id: id,
+            },
+            relations:{
+                author:true,
+                users:true
             }
         });
         if (!group) {
@@ -70,13 +75,14 @@ export class GroupService {
 
 
     //delete an array of users from a group
-    async deleteFrom(id: number, user_ids: number[], options = {all: null}) {
+    async deleteFrom(id: string, user_ids: string[], options = {all: null}) {
         const group = await this.groupsRepository.findOne({
             where: {
                 id: id,
             },
             relations: {
-                users: true
+                users: true,
+                author:true
             },
         });
         if (!group) {
@@ -96,13 +102,14 @@ export class GroupService {
     }
 
     //add an array of users to a group
-    async addTo(id: number, user_ids: number[]) {
+    async addTo(id: string, user_ids: string[]) {
         const group = await this.groupsRepository.findOne({
             where: {
                 id: id,
             },
             relations: {
-                users: true
+                users: true,
+                author:true
             },
         });
         if (!group) {
@@ -121,7 +128,7 @@ export class GroupService {
     }
 
     //get all Authors groups
-    async getAll(author: number) {
+    async getAll(author: string) {
         return await this.groupsRepository.find({
             relations: {
                 users: true,

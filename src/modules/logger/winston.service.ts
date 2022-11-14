@@ -39,8 +39,6 @@ export class WinstonService {
                 return this.logger.httpLogger.info(data)
             case('error'):
                 return this.logger.errorLogger.error(data)
-            case('debug'):
-                return this.logger.debugLogger.debug(data)
             default:
                 return this.logger.defaultLogger.info(data)
         }
@@ -52,7 +50,6 @@ abstract class Logger {
     abstract defaultLogger
     abstract httpLogger
     abstract errorLogger
-    abstract debugLogger
 
 }
 
@@ -60,15 +57,13 @@ class WinstonLogger extends Logger {
     defaultLogger;
     httpLogger;
     errorLogger;
-    debugLogger;
-
 
     constructor(transports) {
         super();
         const defaultStringFormat = format.printf((info) => {
-            const {label, status, data, message, timestamp} = info
-            const stack = data?.stack
-            return (`[${label}] - ${timestamp || ''} - ${status || ''} - ${message} : ${data ? JSON.stringify(data) + (stack ? "\n" + stack : "") : ''}`)
+            const {label, status, stack, data, message, timestamp} = info
+            const stack_ = stack || data?.stack
+            return (`[${label}] - ${timestamp || ''} - ${status || ''} - ${message} : ${data ? JSON.stringify(data) + (stack_ ? "\n" + stack_ : "") : ''}`)
         });
         const defaultFileFormat = {}
         const defaultSettings = {
@@ -90,13 +85,6 @@ class WinstonLogger extends Logger {
                 //later
                 ...defaultSettings,
                 format: format.combine(format.label({label: 'ERROR'}), format.errors({stack: true}), format.timestamp(), format.colorize(), defaultStringFormat)
-            }
-        )
-        this.debugLogger = createLogger(
-            {
-                //later
-                ...defaultSettings,
-                format: format.combine(format.label({label: 'DEBUG'}), format.colorize(), defaultStringFormat)
             }
         )
     }

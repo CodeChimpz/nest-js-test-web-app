@@ -3,8 +3,8 @@ import {User} from '../user/user.entity';
 
 @Entity()
 export class Restriction {
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn("uuid")
+    id: string;
 
     @Column({default: null})
     type: string;

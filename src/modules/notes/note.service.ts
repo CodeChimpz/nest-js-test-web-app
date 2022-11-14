@@ -16,7 +16,7 @@ export class NoteService {
     ) {
     }
 
-    async delete(author: number, notes, options) {
+    async delete(author, notes, options) {
         if (options.all) {
             const authorFound = await this.usersRepository.findOne({
                 where: {
@@ -30,12 +30,12 @@ export class NoteService {
             await this.usersRepository.save(authorFound)
             return 1;
         }
-        await this.notesRepository.delete({id: In(notes)});
+        await this.notesRepository.delete({id: In(notes.map(note => String(note)))});
         return 1;
     }
 
     //add notes to a user
-    async update(user: number, author: number, notes: any[]) {
+    async update(user, author, notes: any[]) {
         const userFound = await this.usersRepository.findOneBy({id: user})
         const authorFound = await this.usersRepository.findOneBy({id: author})
         if (!(authorFound || userFound)) {
@@ -49,8 +49,8 @@ export class NoteService {
     }
 
     //return all notes for a User
-    async findForUser(user: number, author: number): Promise<any> {
-        return await this.notesRepository.findOne({
+    async findForUser(user, author): Promise<any> {
+        return await this.notesRepository.find({
             relations: {
                 author: true,
                 user: true

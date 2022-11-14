@@ -1,0 +1,655 @@
+openapi: 3.0.3
+info:
+  title: Nestjs Test API
+  description: ""
+  version: 1.0.1
+tags:
+  - name: auth
+    description: Sign Up/Sign in
+  - name: notes
+    description: Add notes to Users
+  - name: restriction
+    description: Block or ban users
+  - name: group
+    description: Divide users into private groups
+  - name: posts
+    description: Make posts, reply to posts
+  - name: admin
+    description: Admin functionality
+paths:
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Sign Up
+      description: Create a new user account
+      operationId: register
+      requestBody:
+        description: Credentials
+        content:
+          application/json:
+            schema:
+              required:
+                - name
+                - email
+                - password
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                  default:
+                    message: "Successfully signed up"
+                    content:
+                  
+        '400':
+          description: Invalid data or such user already exists
+          content:
+            application/jsoin:
+              schema:
+                  default: 
+                    message: "Invalid data or such user already exists"
+      security:
+        - api_key: []
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Sign in your account
+      description: Sign in and get a jwt token
+      operationId: login
+      requestBody:
+        description: Credentials
+        content:
+          application/json:
+            schema:
+              required:
+                - email
+                - password
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+        required: true
+      responses:
+        '200':
+          description: Successful operation , return user id
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                    message: 
+                      type: string
+                      default: successful authentication
+                    content:
+                      type: object
+                      properties:
+                        token: 
+                          type: string
+                        id:
+                          type: string
+        '404':
+          description: Invalid data or such user already exists
+          content:
+              application/jsoin:
+                schema:
+                      default:
+                        message: "Not authenticated! Invalid email or password."
+      security:
+        - api_key: []
+  /admin/notes/{user}:
+    parameters: [
+        $ref: '#/components/parameters/user'
+      ]
+    get:
+      tags:
+        - admin
+        - notes
+      summary: Finds notes associated with the user
+      description: Finds notes associated with the user for the author of the request
+      operationId: findNotesForUser
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Note'          
+    put:
+      tags:
+        - admin
+        - notes
+      summary: Adds notes for a user
+      description: Appends an array of notes to a user
+      operationId: addNotes
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  content:
+                    type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                default: 
+                  message: "Updated notes for user {{userId}}"
+      security:
+        - api_key: []
+  /admin/notes/{user}/del:
+    parameters: [
+                    $ref: "#/components/parameters/user"
+      ]
+    put:
+      tags:
+        - admin
+        - notes
+      summary: deletes notes for user
+      description: deletes an array or all notes for a given user
+      requestBody:
+        description: Array of note Ids to delete and options object
+        content:
+          application/json:
+            schema:
+              type: object
+              required: 
+                - notes
+              properties:
+                notes:
+                  type: array
+                  items:
+                    type: integer
+                  example:
+                    - 4c3ec4a0-8cf6-4e6c-95b0-735b7edb0c94
+                    - 397ac0df-dd5c-43f9-aa6d-7e8568622a34
+                options:
+                  type: object
+                  properties:
+                    all:
+                      type: boolean
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                default: 
+                  message: "Updated notes for user {{userId}}"
+      security:
+        - api_key: []
+  /admin/groups/{group}:
+    parameters:
+      - $ref : "#/components/parameters/group"
+
+    get:
+      tags:
+        - admin
+        - group
+      summary: get group by id
+      description: get a group from your owned groups with all users by group id
+      operationId: getGroup
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+                schema:
+                  $ref: "#/components/schemas/Group"
+        '404':
+          description: no group found
+          content:
+            application/json:
+                schema:
+                  type: object
+                  properties:
+                    message: 
+                      type: string
+                      default : "No such group found"
+      security:
+        - api_key: []
+    delete:
+      tags:
+        - admin
+        - group
+      summary: deletes group 
+      description: deletes group by id
+      operationId: deleteGroup
+      responses: 
+          "200":
+            description: successful operation
+            content:
+              application/json:
+                schema:
+                  default: 
+                    message: "Deleted notes"
+  /admin/groups/{group}/add:
+    parameters:
+      - $ref : "#/components/parameters/group"
+    put:
+      tags:
+        - admin
+        - group
+      summary: add users to a group 
+      description: add an array of users to a group you own
+      operationId: addToGroup
+      requestBody:
+        description: Array of user ids
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              example:
+                - fcab1952-1467-4111-a6ff-ae9cac26252c
+                - 741a7b92-6675-4c02-b1b1-2a8852e84596
+                - 562d6227-7f5a-4f9e-91d6-05477cc28129
+      responses:
+        '200':
+          $ref: "#/components/responses/editGroupSucc"
+        '404':
+          $ref : "#/components/responses/groupFindFail"
+      security:
+        - api_key: []
+  /admin/groups/{group}/edit:
+    parameters:
+      - $ref : "#/components/parameters/group"
+    put:
+      tags:
+        - admin
+        - group
+      summary: edit group 
+      description: edit group metadata for a group you own
+      operationId: editGroup
+      requestBody:
+        description: New group name
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupData"
+      responses:
+        '200':
+          $ref: "#/components/responses/editGroupSucc"
+        '404':
+          $ref : "#/components/responses/groupFindFail"
+      security:
+        - api_key: []
+  /admin/groups/{group}/del:
+    parameters:
+      - $ref : "#/components/parameters/group"
+    put:
+      tags:
+        - admin
+        - group
+      summary: delete users from a group 
+      description: delete users from a group  you own
+      operationId: deleteFromGroup
+      requestBody:
+        description: Array of user ids
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: number
+              example:
+                - 4c3ec4a0-8cf6-4e6c-95b0-735b7edb0c94
+                - fb2f6095-e867-499e-8b5b-8270706f6a82
+                - 4af644fe-fc5a-4ad5-b824-4ca84344b1bb
+      responses:
+        '200':
+          $ref: "#/components/responses/editGroupSucc"
+        '404':
+          $ref : "#/components/responses/groupFindFail"
+      security:
+        - api_key: []
+  /admin/groups:
+    post:
+      tags:
+        - admin
+        - group
+      summary: Create new group
+      operationId: createGroup
+      requestBody:
+        description: new group basic data with initial users
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                groupData:
+                  $ref: "#/components/schemas/GroupData"
+                users:
+                  type: array
+                  items: 
+                    $ref: "#/components/schemas/UserDTO"
+      responses:
+        '200':
+          description: successful operation , return created group id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    default: "Group created"
+                  group:
+                    type: string
+                    example: 397ac0df-dd5c-43f9-aa6d-7e8568622a34
+        '400':
+          description: operayion failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    default: "you already have a group with such name"
+      security:
+        - api_key: []
+  /admin/restrictions/{user}:
+    parameters:
+      - $ref : "#/components/parameters/user"
+    get:
+      tags:
+        - admin
+        - restriction
+      summary: check users current restriction
+      description: get users associated restriction data
+      responses:
+        '200':
+          description: successful operation, will return object with restriction data (null if no restriction is currently placed on the user )
+          content:
+            application/json:
+                schema: 
+                  $ref: "#/components/schemas/Restriction"
+        '404':
+          $ref: "#/components/responses/userFindFail"
+      security:
+        - api_key: []
+    post:
+      tags:
+        - admin
+        - restriction
+      summary: place a restriction
+      description: places a restriction on a user, deleting the current one, to relieve user from any restriction pass null values in a restriction object or a null restriction parameter
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+                schema: 
+                  type: object
+                  properties: 
+                    message:
+                      type: string
+                      default: "Restriction placed"
+      security:
+        - api_key: []
+  /posts/post:
+    post:
+      tags:
+        - posts
+      summary: Post a new post
+      description: creates a new post
+      requestBody:
+        description: provde text data for a post
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: succssesful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+  /posts/{post}:
+    parameters:
+      - $ref: "#/components/parameters/post"
+    get:
+      tags:
+        - posts
+      summary: get post by id
+      description: get a post and its direct repliesw by provided id
+      responses:
+        '200':
+          description: succssesful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        '404':
+          description: unsuccssesful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: 
+                    type: string
+                    default: "No such post"
+  /posts/{post}/comment:
+    parameters:
+      - $ref: "#/components/parameters/post"
+    post:
+      tags:
+        - posts
+      summary: comment on a post
+      description: leave a comment on a post
+      responses:
+        '200':
+          description: succssesful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        '404':
+          description: not valid post id to comment on 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: 
+                    type: string
+                    default: "No such post"
+    
+components:
+  parameters:
+    user:
+      name: user
+      in: path
+      description: user uid we need to fetch
+      schema:
+        type: string
+      required: true
+      example: 562d6227-7f5a-4f9e-91d6-05477cc28129
+    group:
+      name: group
+      in: path
+      description: group uid we need to fetch
+      schema:
+        type: string
+      required: true
+      example: 562d6227-7f5a-4f9e-91d6-05477cc28129
+    post:
+      name: post
+      in: path
+      description: post uid we need to fetch
+      schema:
+        type: string
+      required: true
+      example: 562d6227-7f5a-4f9e-91d6-05477cc28129
+  responses:
+    editGroupSucc:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    default: "Group updated"
+                  content:
+                    type: array
+                    items:
+                      $ref : "#/components/schemas/Group"
+    groupFindFail:
+          description: no group with usch id has been found
+          content:
+            application/json:
+                schema:
+                  type: object
+                  properties:
+                    message: 
+                      type: string
+                      default : "No such group found"
+    userFindFail:
+          description: no user with such id has been found 
+          content:
+            application/json:
+                schema:
+                  type: object
+                  properties:
+                    message: 
+                      type: string
+                      default : "No such user found"
+    default:
+      description: ''
+      content:
+         application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              content:
+                type: object
+            
+  schemas:
+    Note:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 562d6227-7f5a-4f9e-91d6-05477cc28129
+        content:
+          type: string
+        author:
+                        $ref: "#/components/schemas/UserDTO"
+    Restriction:
+      type: object
+      properties:
+            id:
+              type: string
+              example: 562d6227-7f5a-4f9e-91d6-05477cc28129
+            setAt:
+                type: string
+                format: date
+                example: 32941092
+      oneOf:
+                - type: object
+                  properties:
+                    type:
+                      type: string
+                      default: "BLOCK"
+                    timeout:
+                        type: string
+                        format: date
+                        example: 329847918
+                - type: object
+                  properties:
+                    type:
+                      type: string
+                      default: "BAN"
+                - type: object
+                  properties:
+                    type:
+                      type: string
+                      default: null
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 562d6227-7f5a-4f9e-91d6-05477cc28129
+        name:
+          type: string
+        author:
+            $ref: "#/components/schemas/UserDTO"
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDTO"
+    GroupData:
+      type: object
+      properties:
+              name: 
+                type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 562d6227-7f5a-4f9e-91d6-05477cc28129
+        name: 
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+          format: password
+          
+    UserDTO:
+            type: object
+            properties:
+                id:
+                  $ref: "#/components/schemas/User/properties/id"
+                name:
+                  $ref: "#/components/schemas/User/properties/name"
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 562d6227-7f5a-4f9e-91d6-05477cc28129
+        textcontent:
+          type: string
+        replies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Post"
+        originalPoster:
+            $ref: "#/components/schemas/UserDTO"
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      in: header
+      

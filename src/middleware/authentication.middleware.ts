@@ -19,9 +19,9 @@ export class CheckAccess {
             if (req.originalUrl.match(/\/auth\/.*/)) {
                 return next()
             }
-            this.logger.log('Authentication middleware', 'debug')
             const token = req.header('Authorization').split(' ')[1]
             const check = await jwt.verify(token, this.secretService.data.jwt.bearer)
+
             if (!check) {
                 await this.logger.log({message: "Failed jwt authentication", data: token, status: 401}, 'http')
                 return res.status(401).json({
@@ -76,7 +76,8 @@ export class CheckAdmin {
             }
             this.logger.log({message: 'Successful admin login', data: check})
             next()
-        } catch (err) {
+        } catch
+            (err) {
             this.logger.log({message: err.message, data: err}, 'error')
             res.status(401).json({
                 message: "Not authenticated"
