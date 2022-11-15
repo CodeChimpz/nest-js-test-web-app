@@ -26,6 +26,9 @@ export class NoteService {
                     notes: true
                 }
             })
+            if(!authorFound){
+                return;
+            }
             authorFound.notes = []
             await this.usersRepository.save(authorFound)
             return 1;
@@ -38,7 +41,7 @@ export class NoteService {
     async update(user, author, notes: any[]) {
         const userFound = await this.usersRepository.findOneBy({id: user})
         const authorFound = await this.usersRepository.findOneBy({id: author})
-        if (!(authorFound || userFound)) {
+        if (!(authorFound && userFound)) {
             return;
         }
         const newNotes = notes.map(note => {

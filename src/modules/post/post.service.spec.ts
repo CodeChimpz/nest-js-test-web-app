@@ -17,9 +17,9 @@ describe('PostService', () => {
                     repos: [User, Post]
                 },
                 async (repos, service, entityCount = {users: 1000, posts: 1000}) => {
-                    const users = []
-                    const posts = []
-                    const postService = service
+                    let users = []
+                    let posts = []
+
                     for (let i = 0; i < entityCount.users; i++) {
                         users.push({
                             name: getRandomText(),
@@ -27,38 +27,40 @@ describe('PostService', () => {
                             password: getRandomText()
                         })
                     }
-                    console.log('Generated users')
-                    //
-                    for (let i = 0; i < entityCount.posts; i++) {
-                        const newPost = {
-                            textContent: getRandomText(),
-                            author: getRandomIntId(entityCount.users),
-                        }
-                        posts.push(newPost)
-                    }
-                    console.log('Generated posts')
-                    //
                     for (const user of users) {
                         await repos.UserRepo.save(user)
                     }
+                    users = await repos.UserRepo.find({})
+                    console.log('Generated users')
+                    //
+                    for (let i = 0; i < entityCount.posts; i++) {
+                        const author = users[getRandomIntId(users.length-1)]
+                        const newPost = {
+                            textContent: getRandomText(),
+                            author: author.id,
+                        }
+                        posts.push(newPost)
+                    }
                     for (let i = 0; i < entityCount.posts / 2; i++) {
-                        await postService.post(posts[i], posts[i].author)
+                        await service.post(posts[i], posts[i].author)
                     }
+                    const ops = await repos.PostRepo.find({relations: {originalPoster: true, replies: true}})
                     for (let i = entityCount.posts / 2; i < entityCount.posts; i++) {
-                        await postService.comment(posts[i], getRandomIntId(entityCount.posts / 2), posts[i].author)
+                        const op = ops[getRandomIntId(ops.length-1)]
+                        await service.comment(posts[i], op.id, posts[i].author)
                     }
-
-                    console.log("Updated db")
-                    return posts
+                    posts = [...ops, ...await repos.PostRepo.find({relations: {originalPoster: true, replies: true}})]
+                    console.log('Generated posts')
+                    return {users, posts}
                 })
             postService = service.returnService
-            posts = service.referenceData
+            posts = service.referenceData.posts
         })
         it('should be defined', async () => {
             expect(postService).toBeDefined();
         });
         it('finds a post by id, returns post, OP and direct replies', async () => {
-            const id = getRandomIntId(collectionSize)
+            const id = posts[getRandomIntId(collectionSize)].id
             const post = await postService.find(id)
             expect(post).toBeDefined()
             expect(post).toBeInstanceOf(Post)
@@ -67,13 +69,13 @@ describe('PostService', () => {
         })
         it('leaves a comment on a Post', async () => {
             const post = posts[getRandomIntId(collectionSize)]
-            const originalPostId = getRandomIntId(collectionSize)
-            const comment = await postService.comment(post, originalPostId, post.author)
-            const originalPost = await postService.find(originalPostId)
+            const originalPost = posts[getRandomIntId(collectionSize)]
+            const comment = await postService.comment(post, originalPost.id, post.author)
+            const updatedPost = await postService.find(originalPost.id)
             expect(comment).toBeDefined()
             expect(comment).toBeInstanceOf(Post)
-            expect(comment).toHaveProperty('mentionedPost.id', originalPostId)
-            expect(originalPost.replies.map(op => op.id)).toContain(comment.id)
+            expect(comment).toHaveProperty('mentionedPost.id', originalPost.id)
+            expect(updatedPost.replies.map(op => op.id)).toContain(comment.id)
         })
 
     })

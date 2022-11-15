@@ -45,7 +45,7 @@ export async function prepareDb(moduleOptions: ModuleOptions,
                 ...dbData.test,
                 entities: [Post, User, Restriction, Group, Note],
                 synchronize: true,
-                dropSchema: process.env.DROP ?? true,
+                dropSchema: process.env.DB_ENV_DROP ?? true,
             }),
             TypeOrmModule.forFeature(repos)
         ],
